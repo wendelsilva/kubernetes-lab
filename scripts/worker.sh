@@ -13,10 +13,7 @@ else
     exit 1
 fi
 
-echo "=== [1/2] Aguardando pelo comando de Join do Control Plane ==="
-
-echo "=== [2/2] Executando ingresso no cluster Kubernetes ==="
-# Executa o join usando o token estático e ignorando a checagem de hash do CA
+echo "=== [1/1] Executando ingresso no cluster Kubernetes ==="
 sudo kubeadm join "$CONTROL_PLANE_ADDR" --token "$STATIC_TOKEN" --discovery-token-unsafe-skip-ca-verification
 
 echo "=== Nó Worker integrado ao cluster com sucesso! ==="

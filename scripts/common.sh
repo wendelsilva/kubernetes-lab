@@ -3,7 +3,6 @@ set -euo pipefail
 
 K8S_VERSION="v1.36"
 
-# Garante que o APT não abra telas interativas solicitando entrada do usuário
 export DEBIAN_FRONTEND=noninteractive
 
 echo "=== [1/5] Desabilitando SWAP ==="
@@ -35,7 +34,6 @@ sudo apt-get update -y
 sudo apt-get install -y containerd
 
 sudo mkdir -p /etc/containerd
-# Correção importante: Garante que o dump do containerd seja salvo corretamente com privilégios elevados
 containerd config default | sudo tee /etc/containerd/config.toml >/dev/null
 sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
 
@@ -47,7 +45,6 @@ sudo apt-get install -y apt-transport-https ca-certificates curl gpg
 
 sudo mkdir -p -m 755 /etc/apt/keyrings
 
-# Correção importante: O curl envia os dados para o gpg, e o gpg precisa usar sudo para escrever na pasta restrita
 curl -fsSL "https://pkgs.k8s.io/core:/stable:/${K8S_VERSION}/deb/Release.key" | sudo gpg --dearmor --yes -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
 echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/${K8S_VERSION}/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list

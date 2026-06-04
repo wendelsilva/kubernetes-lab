@@ -1,4 +1,3 @@
-# 1. Secret para armazenar a senha do banco de dados
 resource "kubernetes_secret_v1" "postgres_secret" {
   metadata {
     name      = "postgres-secret"
@@ -12,7 +11,6 @@ resource "kubernetes_secret_v1" "postgres_secret" {
   type = "Opaque"
 }
 
-# 2. Persistent Volume (PV) do tipo HostPath
 resource "kubernetes_persistent_volume_v1" "postgres_pv" {
   metadata {
     name = "postgres-pv"
@@ -25,7 +23,6 @@ resource "kubernetes_persistent_volume_v1" "postgres_pv" {
     access_modes       = ["ReadWriteOnce"]
     storage_class_name = "manual"
     
-    # Define o volume persistido na VM do worker node
     persistent_volume_source {
       host_path {
         path = "/mnt/data/postgres"
@@ -35,7 +32,6 @@ resource "kubernetes_persistent_volume_v1" "postgres_pv" {
   }
 }
 
-# 3. Persistent Volume Claim (PVC) associado ao PV
 resource "kubernetes_persistent_volume_claim_v1" "postgres_pvc" {
   metadata {
     name      = "postgres-pvc"
@@ -55,7 +51,6 @@ resource "kubernetes_persistent_volume_claim_v1" "postgres_pvc" {
   }
 }
 
-# 4. Deployment do PostgreSQL v15
 resource "kubernetes_deployment_v1" "postgres" {
   metadata {
     name      = "postgres"
@@ -82,12 +77,10 @@ resource "kubernetes_deployment_v1" "postgres" {
       }
 
       spec {
-        # Garante que o banco sempre rode no worker-1 para reutilizar o HostPath local
         node_selector = {
           "kubernetes.io/hostname" = "worker-1"
         }
 
-        # Solução DevOps para corrigir permissões do diretório hostPath antes do banco iniciar
         init_container {
           name  = "fix-permissions"
           image = "busybox"
@@ -142,7 +135,6 @@ resource "kubernetes_deployment_v1" "postgres" {
             }
           }
 
-          # Subdiretório pgdata dentro do volume montado para evitar conflitos de arquivos ocultos
           env {
             name  = "PGDATA"
             value = "/var/lib/postgresql/data/pgdata"
@@ -165,7 +157,6 @@ resource "kubernetes_deployment_v1" "postgres" {
   }
 }
 
-# 5. Service ClusterIP para expor o Postgres internamente
 resource "kubernetes_service_v1" "postgres_service" {
   metadata {
     name      = "postgres"

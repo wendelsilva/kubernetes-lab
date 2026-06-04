@@ -1,10 +1,8 @@
-# 1. Geração da Chave Privada para o Certificado SSL/TLS
 resource "tls_private_key" "app_key" {
   algorithm = "RSA"
   rsa_bits  = 2048
 }
 
-# 2. Geração do Certificado SSL/TLS Autoassinado para o Domínio
 resource "tls_self_signed_cert" "app_cert" {
   private_key_pem = tls_private_key.app_key.private_key_pem
 
@@ -22,7 +20,6 @@ resource "tls_self_signed_cert" "app_cert" {
   ]
 }
 
-# 3. Secret Kubernetes de TLS contendo o par Certificado/Chave
 resource "kubernetes_secret_v1" "app_tls_secret" {
   metadata {
     name      = "app-tls"
@@ -37,7 +34,6 @@ resource "kubernetes_secret_v1" "app_tls_secret" {
   }
 }
 
-# 4. Deployment da Aplicação Go
 resource "kubernetes_deployment_v1" "app" {
   metadata {
     name      = "task-app"
@@ -68,7 +64,6 @@ resource "kubernetes_deployment_v1" "app" {
           name  = "task-app"
           image = var.app_image
           
-          # PullPolicy Always garante que o K8s baixe a imagem mais recente do Docker Hub
           image_pull_policy = "Always"
 
           resources {
@@ -88,7 +83,7 @@ resource "kubernetes_deployment_v1" "app" {
 
           env {
             name  = "DB_HOST"
-            value = "postgres" # Nome do serviço do PostgreSQL no cluster
+            value = "postgres"
           }
 
           env {
@@ -141,7 +136,6 @@ resource "kubernetes_deployment_v1" "app" {
   }
 }
 
-# 5. Service do App Go (ClusterIP)
 resource "kubernetes_service_v1" "app_service" {
   metadata {
     name      = "task-app"
@@ -162,7 +156,6 @@ resource "kubernetes_service_v1" "app_service" {
   }
 }
 
-# 6. Ingress Resource configurando TLS/HTTPS
 resource "kubernetes_ingress_v1" "app_ingress" {
   depends_on = [helm_release.ingress_nginx]
 
@@ -170,12 +163,12 @@ resource "kubernetes_ingress_v1" "app_ingress" {
     name      = "task-app-ingress"
     namespace = "default"
     annotations = {
-      "nginx.ingress.kubernetes.io/ssl-redirect" = "true" # Força redirecionamento de HTTP para HTTPS
+      "nginx.ingress.kubernetes.io/ssl-redirect" = "true"
     }
   }
 
   spec {
-    ingress_class_name = "nginx" # Forma moderna de definir a classe do Ingress
+    ingress_class_name = "nginx"
 
     tls {
       hosts       = [var.domain_name]
